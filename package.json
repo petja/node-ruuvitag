@@ -10,16 +10,19 @@
   "scripts": {
     "test": "jasmine test/*Spec.js",
     "lint": "eslint '**/*.js'",
-    "prettify": "prettier --write '**/*.js'"
+    "prettify": "prettier --write '**/*.js'",
+    "build": "tsc"
   },
   "author": "",
   "license": "BSD-3",
   "devDependencies": {
+    "@types/node": "^13.11.0",
     "eslint": "^6.8.0",
     "jasmine": "^3.5.0",
     "mockery": "^2.1.0",
     "prettier": "^1.19.1",
-    "sinon": "^9.0.1"
+    "sinon": "^9.0.1",
+    "typescript": "^3.8.3"
   },
   "dependencies": {
     "@abandonware/noble": "^1.9.2-5"
