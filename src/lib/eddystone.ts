@@ -17,7 +17,7 @@ const suffixes = [
   ".gov",
 ];
 
-module.exports = function parseEddystoneBeacon(serviceDataBuffer) {
+export default function parseEddystoneBeacon(serviceDataBuffer: Buffer) {
   // Parse url from an Eddystone beacon
   //
   // Returns undefined if it's not an Eddystone URL packet
@@ -46,4 +46,4 @@ module.exports = function parseEddystoneBeacon(serviceDataBuffer) {
   }
 
   return url;
-};
+}

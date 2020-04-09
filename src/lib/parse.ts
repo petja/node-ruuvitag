@@ -1,4 +1,6 @@
-const dataFormats = require("../dataformats/index");
+import * as dataformatV2_V4 from "../dataformats/2and4";
+import * as dataformatV3 from "../dataformats/3";
+import * as dataformatV5 from "../dataformats/5";
 
 function stripUrl(url) {
   const match = url.match(/#(.+)$/);
@@ -20,13 +22,11 @@ function getReadings(encodedData) {
   const dataFormat = buffer[0];
 
   return dataFormat === 2 || dataFormat === 4
-    ? Object.assign({ dataFormat: dataFormat }, dataFormats.formats_2_and_4.parse(buffer))
+    ? Object.assign({ dataFormat: dataFormat }, dataformatV2_V4.parse(buffer))
     : new Error("Unsupported data format: " + dataFormat);
 }
 
-const that = (module.exports = {});
-
-that.parseUrl = url => {
+export const parseUrl = url => {
   if (!url.match(/ruu\.vi/)) {
     return new Error("Not a ruuviTag url");
   }
@@ -36,13 +36,12 @@ that.parseUrl = url => {
   return encodedData instanceof Error ? encodedData : getReadings(encodedData);
 };
 
-that.parseManufacturerData = dataBuffer => {
-  let dataFormat = dataBuffer[2];
-  switch (dataFormat) {
+export const parseManufacturerData = (dataBuffer: Buffer) => {
+  switch (dataBuffer[2]) {
     case 3:
-      return dataFormats.format_3.parse(dataBuffer);
+      return dataformatV3.parse(dataBuffer);
     case 5:
-      return dataFormats.format_5.parse(dataBuffer);
+      return dataformatV5.parse(dataBuffer);
     default:
       return new Error("Data format not supported");
   }

@@ -1,40 +1,41 @@
-const noble = require("@abandonware/noble");
-const EventEmitter = require("events").EventEmitter;
-const parser = require("./lib/parse");
-const parseEddystoneBeacon = require("./lib/eddystone");
+import noble, { Peripheral } from "@abandonware/noble";
+import { EventEmitter } from "events";
+import * as parser from "./lib/parse";
+import parseEddystoneBeacon from "./lib/eddystone";
 
 class RuuviTag extends EventEmitter {
-  constructor(data) {
+  id: string;
+  address: string;
+  addressType: string;
+  connectable: boolean;
+
+  constructor(data: { id: string; address: string; addressType: string; connectable: boolean }) {
     super();
-    this.id = data.id;
-    this.address = data.address;
-    this.addressType = data.addressType;
-    this.connectable = data.connectable;
+    Object.assign(this, data);
   }
 }
 
 class Ruuvi extends EventEmitter {
+  private _foundTags: RuuviTag[] = []; // this array will contain registered RuuviTags
+  private _tagLookup: Record<string, RuuviTag> = {};
+  public scanning = false;
+  public listenerAttached = false;
+
   constructor() {
     super();
-    this._foundTags = []; // this array will contain registered RuuviTags
-    this._tagLookup = {};
-    this.scanning = false;
-    this.listenerAttached = false;
 
-    const registerTag = tag => {
+    const registerTag = (tag: RuuviTag): void => {
       this._foundTags.push(tag);
       this._tagLookup[tag.id] = tag;
     };
 
-    const onDiscover = peripheral => {
-      let newRuuviTag;
-
+    const onDiscover = (peripheral: Peripheral) => {
       // Scan for new RuuviTags, add them to the array of found tags
       // is it a RuuviTag in RAW mode?
       const manufacturerData = peripheral.advertisement ? peripheral.advertisement.manufacturerData : undefined;
       if (manufacturerData && manufacturerData[0] === 0x99 && manufacturerData[1] === 0x04) {
         if (!this._tagLookup[peripheral.id]) {
-          newRuuviTag = new RuuviTag({
+          const newRuuviTag = new RuuviTag({
             id: peripheral.id,
             address: peripheral.address,
             addressType: peripheral.addressType,
@@ -52,7 +53,7 @@ class Ruuvi extends EventEmitter {
           const url = parseEddystoneBeacon(serviceData.data);
           if (url && url.match(/ruu\.vi/)) {
             if (!this._tagLookup[peripheral.id]) {
-              newRuuviTag = new RuuviTag({
+              const newRuuviTag = new RuuviTag({
                 id: peripheral.id,
                 address: peripheral.address,
                 addressType: peripheral.addressType,
@@ -69,7 +70,7 @@ class Ruuvi extends EventEmitter {
       const ruuviTag = this._tagLookup[peripheral.id];
 
       if (ruuviTag) {
-        if (peripheral.advertisement && peripheral.advertisement.manufacturerData) {
+        if (peripheral.advertisement.manufacturerData) {
           let dataFormat = peripheral.advertisement.manufacturerData[2];
           return ruuviTag.emit(
             "updated",
@@ -106,6 +107,7 @@ class Ruuvi extends EventEmitter {
     if (noble.state === "poweredOn") {
       noble.startScanning([], true);
     } else {
+      // @ts-ignore
       noble.once("stateChange", () => {
         noble.startScanning([], true);
       });
